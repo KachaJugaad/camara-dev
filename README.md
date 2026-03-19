@@ -4,6 +4,7 @@
 [![Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![CAMARA Fall25](https://img.shields.io/badge/CAMARA-Fall25-purple)](https://camaraproject.org)
 [![Simulated](https://img.shields.io/badge/mode-simulation-green)](https://github.com/KachaJugaad/camara-dev)
+[![Substack](https://img.shields.io/badge/Substack-Read_Post-orange)](https://substack.com/home/post/p-191454486)
 
 Canada's first open-source CAMARA API sandbox. Test SIM swap detection, number
 verification, and location verification against realistic Rogers, Bell, and Telus
