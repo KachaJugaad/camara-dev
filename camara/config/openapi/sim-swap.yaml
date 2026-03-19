@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: CAMARA SIM Swap API
+  description: |
+    CAMARA SIM Swap Detection — Spring25 v0.5.0
+    Detects if a SIM card was recently swapped for a given phone number.
+  version: 0.5.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Sandbox simulation server
+
+paths:
+  /sim-swap/v0/retrieve-date:
+    post:
+      operationId: retrieveSimSwapDate
+      summary: Retrieve the date of the most recent SIM swap
+      tags:
+        - SIM Swap
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimSwapRequest"
+      responses:
+        "200":
+          description: SIM swap date retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimSwapResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    SimSwapRequest:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+          description: Phone number in E.164 format
+          example: "+14165550100"
+        maxAge:
+          type: integer
+          description: Maximum age in hours to check for SIM swaps (max 2160)
+          minimum: 1
+          maximum: 2160
+          default: 240
+
+    SimSwapResponse:
+      type: object
+      required:
+        - latestSimChange
+      properties:
+        latestSimChange:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO8601 timestamp of last SIM swap, or null if none
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message

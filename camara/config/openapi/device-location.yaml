@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  title: CAMARA Device Location API
+  description: |
+    CAMARA Device Location Verification — Spring25 v0.2.0
+    Verifies whether a device is within a specified geographic area.
+  version: 0.2.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Sandbox simulation server
+
+paths:
+  /device-location/v0/verify:
+    post:
+      operationId: verifyDeviceLocation
+      summary: Verify a device is within a geographic area
+      tags:
+        - Device Location
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceLocationRequest"
+      responses:
+        "200":
+          description: Location verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceLocationResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    DeviceLocationRequest:
+      type: object
+      required:
+        - device
+        - area
+      properties:
+        device:
+          type: object
+          required:
+            - phoneNumber
+          properties:
+            phoneNumber:
+              type: string
+              description: E.164 format phone number
+              example: "+16045550100"
+        area:
+          type: object
+          required:
+            - areaType
+            - center
+            - radius
+          properties:
+            areaType:
+              type: string
+              enum:
+                - CIRCLE
+              description: Only CIRCLE supported in v0.2
+            center:
+              type: object
+              required:
+                - latitude
+                - longitude
+              properties:
+                latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+            radius:
+              type: number
+              minimum: 1
+              maximum: 200000
+              description: Radius in meters (max 200km)
+
+    DeviceLocationResponse:
+      type: object
+      required:
+        - verificationResult
+      properties:
+        verificationResult:
+          type: string
+          enum:
+            - "TRUE"
+            - "FALSE"
+            - "UNKNOWN"
+            - "PARTIAL"
+        matchRate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence rate (only for TRUE/PARTIAL results)
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+        message:
+          type: string

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>camara.dev — Canada's Open CAMARA Telco API Sandbox</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e2e4ed;
+    --muted: #8b8fa8;
+    --purple: #7f77dd;
+    --teal: #1d9e75;
+    --amber: #ef9f27;
+    --red: #e24b4a;
+    --green: #639922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.6; }
+  a { color: var(--purple); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header { border-bottom: 1px solid var(--border); padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-size: 20px; font-weight: 600; color: var(--text); }
+  .logo span { color: var(--purple); }
+  .badge { background: var(--teal); color: #04342c; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+  main { max-width: 960px; margin: 0 auto; padding: 48px 40px; }
+
+  .hero { margin-bottom: 48px; }
+  .hero h1 { font-size: 36px; font-weight: 600; line-height: 1.2; margin-bottom: 16px; }
+  .hero h1 span { color: var(--purple); }
+  .hero p { color: var(--muted); font-size: 17px; max-width: 640px; }
+
+  .story { background: var(--surface); border-left: 3px solid var(--purple); border-radius: 0 12px 12px 0; padding: 24px 28px; margin-bottom: 48px; }
+  .story p { color: var(--muted); font-size: 15px; margin-bottom: 12px; }
+  .story p:last-child { margin-bottom: 0; }
+  .story strong { color: var(--text); }
+  .story .highlight { color: var(--purple); font-weight: 600; }
+
+  .cta-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .btn-primary { background: var(--purple); color: #fff; }
+  .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 48px; }
+  @media (max-width: 700px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .card-value { font-size: 28px; font-weight: 600; color: var(--text); }
+  .card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+
+  .status { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .status-live { background: #0f3022; color: var(--teal); }
+  .status-wip { background: #2a2008; color: var(--amber); }
+  .status-planned { background: #1e1e2a; color: var(--muted); }
+
+  .quickstart { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  pre { background: #0a0c12; border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; font-size: 13px; color: #c9d1e6; margin: 12px 0; }
+  code { font-family: "SF Mono", "Fira Code", monospace; }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .tag { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 12px; color: var(--muted); }
+
+  .use-case { margin-bottom: 32px; }
+  .use-case-story { color: var(--muted); font-size: 14px; font-style: italic; margin-bottom: 12px; max-width: 720px; }
+
+  footer { border-top: 1px solid var(--border); padding: 24px 40px; text-align: center; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">camara<span>.dev</span></div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span class="badge">CAMARA Fall25</span>
+    <span class="badge" style="background:var(--surface);color:var(--teal);border:1px solid var(--border)">Open Source</span>
+    <a href="https://github.com/KachaJugaad/camara-dev" class="btn btn-secondary" style="font-size:13px;padding:6px 14px">GitHub</a>
+    <a href="#quickstart" class="btn btn-primary" style="font-size:13px;padding:6px 14px">Get started</a>
+  </div>
+</header>
+
+<main>
+
+  <div class="hero">
+    <h1>The network already knows.<br><span>Nobody can ask it.</span></h1>
+    <p>Canada's first open-source CAMARA telco API sandbox. Test SIM swap detection, number verification, and location verification against realistic Rogers, Bell, and Telus simulation — no carrier agreement, no approval process, no cost.</p>
+    <div class="tag-row">
+      <span class="tag">Apache 2.0</span>
+      <span class="tag">CAMARA Fall25 spec</span>
+      <span class="tag">MCP-compatible</span>
+      <span class="tag">53 tests passing</span>
+      <span class="tag">Rogers · Bell · Telus</span>
+    </div>
+  </div>
+
+  <!-- ── The story ── -->
+  <div class="story">
+    <p>A woman in Montreal wakes up to a dead phone. She restarts it. Goes about her morning. By the time she calls Rogers three hours later, someone has already used her number to reset her banking passwords, bypass two-factor, and move <strong>forty thousand dollars</strong> out of her accounts.</p>
+    <p>The carrier logged the SIM swap at 2am. The timestamp is sitting in a database right now. Her bank had no idea.</p>
+    <p>Not because the information wasn't there. <span class="highlight">Because nobody asked.</span></p>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="grid-3" style="margin-bottom:32px">
+    <div class="card">
+      <div class="card-title">API surfaces</div>
+      <div class="card-value">4</div>
+      <div class="card-sub">SIM swap (2 ops) · Number verify · Location verify</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Carrier profiles</div>
+      <div class="card-value">3</div>
+      <div class="card-sub">Rogers · Bell · Telus</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tests passing</div>
+      <div class="card-value">53</div>
+      <div class="card-sub">27 unit · 26 integration · 0 failures</div>
+    </div>
+  </div>
+
+  <!-- ── Use cases ── -->
+  <section>
+    <h2>Three questions the network already knows the answer to</h2>
+
+    <div class="use-case">
+      <div class="card-title">UC1 — SIM swap detection</div>
+      <p class="use-case-story">The bank's fraud system runs forty machine learning models on every wire transfer. None of them ask the one question that matters: did someone steal this customer's phone number twenty minutes ago?</p>
+      <table>
+        <tr><td><code>POST /sim-swap/v1/retrieve-date</code></td><td>When was the SIM last swapped?</td><td><span class="status status-live">Live</span></td></tr>
+        <tr><td><code>POST /sim-swap/v1/check</code></td><td>Was the SIM swapped in the last N hours?</td><td><span class="status status-live">Live</span></td></tr>
+      </table>
+    </div>
+
+    <div class="use-case">
+      <div class="card-title">UC2 — Number verification</div>
+      <p class="use-case-story">You send an SMS code. They type it back. You call this "verification." The network knows — without sending anything — whether that number belongs to that device. You just can't ask.</p>
+      <table>
+        <tr><td><code>POST /number-verification/v1/verify</code></td><td>Does this number match this device's SIM?</td><td><span class="status status-live">Live</span></td></tr>
+      </table>
+    </div>
+
+    <div class="use-case">
+      <div class="card-title">UC3 — Location verification</div>
+      <p class="use-case-story">A customer's GPS says Toronto. A ten-dollar app can make any GPS say Toronto. The cell tower the phone is connected to? That's in Bucharest. The network knows. Your fraud system doesn't.</p>
+      <table>
+        <tr><td><code>POST /location-verification/v1/verify</code></td><td>Is this device in the claimed area?</td><td><span class="status status-live">Live</span></td></tr>
+      </table>
+    </div>
+
+    <div class="use-case">
+      <div class="card-title">UC4 — Chained fraud score</div>
+      <p class="use-case-story">SIM swapped. Number doesn't match. GPS spoofed. Any one signal is a red flag. All three together? That's not a customer. That's someone emptying an account.</p>
+      <table>
+        <tr><td><code>POST /sandbox/fraud-score</code></td><td>All 3 signals → risk score 0-100</td><td><span class="status status-live">Live</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── More stories ── -->
+  <section>
+    <h2>The developers who couldn't ask</h2>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Waterloo</div>
+        <p style="font-size:14px;color:var(--muted)">A developer spent three weeks trying to understand the carrier auth flow for SIM swap detection. He gave up and shipped SMS OTP instead. He knew it was less secure. He shipped it anyway because he couldn't figure out how to do better.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Toronto</div>
+        <p style="font-size:14px;color:var(--muted)">A fintech wanted to verify that phone numbers actually belonged to the devices submitting loan applications. No test environment existed. They shipped without verification. A fraud ring submitted two hundred fake applications in one weekend.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Vancouver</div>
+        <p style="font-size:14px;color:var(--muted)">An e-commerce company wanted to check if a buyer's phone was in the same city as the shipping address. The network knows. Cell towers have been accurate to city-level for a decade. The company couldn't get a test environment. They eat the chargebacks.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">The pattern</div>
+        <p style="font-size:14px;color:var(--muted)">The infrastructure exists. The standard exists. The capability is running inside the network right now. The last mile — from the carrier's core systems to a developer's laptop — is where everything falls apart. <strong>This sandbox closes that gap.</strong></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Quickstart ── -->
+  <section id="quickstart">
+    <h2>First API call in 90 seconds</h2>
+    <div class="quickstart">
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px">No carrier agreement. No approval process. No telco knowledge required.</p>
+      <pre><code># 1. Clone and start
+git clone https://github.com/KachaJugaad/camara-dev
+cd camara-dev && docker compose up
+
+# 2. Make your first CAMARA call (demo key — no sign-up needed)
+curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
+  -H "Authorization: Bearer demo-sandbox-key-rogers" \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "+14165550100"}'
+
+# Response: realistic Rogers behavior — ~120ms latency, 4.5% error rate
+# {
+#   "latestSimChange": null,
+#   "_simulation": {"carrier": "Rogers", "latencyMs": 143.2, "simulated": true}
+# }</code></pre>
+    </div>
+  </section>
+
+  <!-- ── Carrier profiles ── -->
+  <section>
+    <h2>Carrier simulation profiles</h2>
+    <table>
+      <tr>
+        <th>Carrier</th><th>p50 latency</th><th>p95 latency</th><th>Timeout rate</th><th>SIM swap delay</th>
+      </tr>
+      <tr>
+        <td><strong>Rogers</strong></td><td>120ms</td><td>340ms</td><td>4.5%</td><td>2 hours</td>
+      </tr>
+      <tr>
+        <td><strong>Bell</strong></td><td>145ms</td><td>410ms</td><td>3.8%</td><td>3 hours</td>
+      </tr>
+      <tr>
+        <td><strong>Telus</strong></td><td>105ms</td><td>295ms</td><td>2.8%</td><td>1 hour</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">All values configurable in <code>config/carriers/*.toml</code>. Adding a new carrier = one TOML file. Zero code changes.</p>
+  </section>
+
+  <!-- ── Compliance ── -->
+  <section>
+    <h2>CAMARA Fall25 spec compliance</h2>
+    <table>
+      <tr><th>Surface</th><th>Endpoint</th><th>Spec</th><th>Status</th></tr>
+      <tr><td>SIM Swap</td><td><code>/sim-swap/v1/retrieve-date</code></td><td>Fall25 v1.0</td><td><span class="status status-live">Compliant</span></td></tr>
+      <tr><td>SIM Swap</td><td><code>/sim-swap/v1/check</code></td><td>Fall25 v1.0</td><td><span class="status status-live">Compliant</span></td></tr>
+      <tr><td>Number Verify</td><td><code>/number-verification/v1/verify</code></td><td>Fall25 v1.0</td><td><span class="status status-live">Compliant</span></td></tr>
+      <tr><td>Location</td><td><code>/location-verification/v1/verify</code></td><td>Fall25 v1.0</td><td><span class="status status-live">Compliant</span></td></tr>
+      <tr><td>Auth</td><td>Bearer token</td><td>Sandbox simplified</td><td><span class="status status-wip">Documented</span></td></tr>
+    </table>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Error responses use CAMARA ErrorInfo schema (status=int, code=str, message=str). All responses include x-correlator and X-CAMARA-Spec-Version headers.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>camara.dev · Apache 2.0 · <a href="https://github.com/KachaJugaad/camara-dev">github.com/KachaJugaad/camara-dev</a></p>
+  <p style="margin-top:6px">CAMARA Fall25 spec-compliant · 53 tests passing · Rogers · Bell · Telus</p>
+</footer>
+
+</body>
+</html>

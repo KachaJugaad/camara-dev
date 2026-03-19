@@ -1,0 +1,52 @@
+# Agent bus — never committed
+.agent-bus/
+
+# Claude Code artifacts — never committed
+.claude/
+*.jsonl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Rust (Phase 2)
+target/
+
+# Go (Phase 2)
+bin/
+
+# Node/React
+node_modules/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test / Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Docker
+*.log

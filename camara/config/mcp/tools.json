@@ -1,0 +1,28 @@
+{
+  "tools": [
+    {
+      "name": "camara_verify_number",
+      "description": "Verify that a phone number is valid and active on a Canadian carrier. Use for fraud prevention, identity verification, and account recovery flows.",
+      "parameters": {
+        "phone_number": {"type": "string", "description": "E.164 format, e.g. +14165550100"},
+        "carrier": {"type": "string", "enum": ["rogers", "bell", "telus", "auto"], "default": "auto"}
+      }
+    },
+    {
+      "name": "camara_detect_sim_swap",
+      "description": "Detect if a SIM card was recently swapped for the given phone number. Use to block account takeover attacks in banking and fintech apps.",
+      "parameters": {
+        "phone_number": {"type": "string", "description": "E.164 format"},
+        "max_age_hours": {"type": "integer", "description": "Check for swaps within this many hours", "default": 24}
+      }
+    },
+    {
+      "name": "camara_get_device_location",
+      "description": "Get approximate location of a device by phone number. Use for fraud detection (is the device where the user claims?) and logistics.",
+      "parameters": {
+        "phone_number": {"type": "string"},
+        "accuracy": {"type": "string", "enum": ["city", "country"], "default": "city"}
+      }
+    }
+  ]
+}

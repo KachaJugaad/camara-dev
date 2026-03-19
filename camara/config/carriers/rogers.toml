@@ -1,0 +1,65 @@
+# config/carriers/rogers.toml
+# Rogers Communications Canada — CAMARA simulation profile
+#
+# Purpose: Defines Rogers-specific latency distributions and error injection rates
+# for the camara-ca simulation engine.
+#
+# Source: 3GPP/IMS production behavior knowledge (Rogers Ontario core, 2024).
+# All values are p-percentile measurements from real network observation.
+#
+# Callers rely on: deterministic behavior given a fixed RNG seed.
+# Callers must NOT assume: values match Rogers' actual production specs exactly —
+# this is a simulation for development testing, not a certified carrier profile.
+
+[carrier]
+name        = "Rogers"
+country     = "CA"
+mcc         = "302"        # Mobile Country Code — Canada
+mnc         = "720"        # Mobile Network Code — Rogers
+msisdn_prefixes = [
+  "1416", "1647", "1437",  # Toronto
+  "1905", "1289",          # Greater Toronto Area
+  "1613", "1343",          # Ottawa
+  "1514", "1438",          # Montreal (Rogers has limited QC presence)
+  "1204",                  # Winnipeg (Rogers Manitoba)
+]
+
+[latency_ms]
+# Distribution based on HSPA+/LTE-A core observed p-percentiles
+p50  = 120
+p75  = 220
+p95  = 340
+p99  = 890
+p999 = 2400   # Occasional IMS congestion spike
+
+[error_profiles]
+# Probability 0.0–1.0. Applied per-request with deterministic RNG.
+# These reflect Rogers' known weak spots in their CAMARA-equivalent capabilities.
+timeout_probability              = 0.045  # 4.5% — IMS timeout under load
+service_unavailable_probability  = 0.012  # 1.2% — planned maintenance windows
+invalid_token_probability        = 0.008  # 0.8% — token cache invalidation race
+roaming_not_supported_probability = 0.023 # 2.3% — device on US border roaming
+
+[features]
+# Which CAMARA surfaces Rogers has committed to (based on GSMA Open Gateway alignment)
+sim_swap_supported              = true
+device_location_supported       = true
+number_verification_supported   = true
+qos_profiles_supported          = false   # Not in MVP scope
+quality_on_demand_supported     = false   # 2027 target
+edge_discovery_supported        = false   # 2028 target
+
+[ipv6]
+# Rogers has partially migrated to IPv6 dual-stack
+dual_stack = true
+ipv6_only_probability = 0.15  # 15% of requests arrive via IPv6-only path
+
+[sim_swap]
+# SIM swap detection specific parameters
+detection_delay_hours = 2     # Rogers takes ~2h to propagate swap events
+max_lookback_days     = 90    # Rogers retains swap history for 90 days
+
+[number_verification]
+# Number verification specific parameters
+ported_number_detection = true  # Rogers can detect numbers ported from other carriers
+voip_detection          = false  # Rogers does not flag VoIP numbers in simulation

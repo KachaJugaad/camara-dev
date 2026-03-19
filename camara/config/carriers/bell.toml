@@ -1,0 +1,42 @@
+# config/carriers/bell.toml
+[carrier]
+name        = "Bell"
+country     = "CA"
+mcc         = "302"
+mnc         = "610"
+msisdn_prefixes = [
+  "1613", "1343",   # Ottawa
+  "1514", "1438",   # Montreal
+  "1418", "1581",   # Quebec City
+  "1506", "1782",   # New Brunswick
+  "1902", "1782",   # Nova Scotia / PEI
+]
+
+[latency_ms]
+p50  = 145
+p75  = 260
+p95  = 410
+p99  = 1100
+p999 = 3200
+
+[error_profiles]
+timeout_probability              = 0.038
+service_unavailable_probability  = 0.009
+invalid_token_probability        = 0.011
+roaming_not_supported_probability = 0.031
+
+[features]
+sim_swap_supported              = true
+device_location_supported       = true
+number_verification_supported   = true
+qos_profiles_supported          = false
+quality_on_demand_supported     = false
+edge_discovery_supported        = false
+
+[ipv6]
+dual_stack = false
+ipv6_only_probability = 0.04
+
+[sim_swap]
+detection_delay_hours = 3
+max_lookback_days     = 60

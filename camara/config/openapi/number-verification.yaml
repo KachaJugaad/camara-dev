@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: CAMARA Number Verification API
+  description: |
+    CAMARA Number Verification — Spring25 v0.3.1
+    Verifies a phone number matches the SIM in the user's device.
+  version: 0.3.1
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Sandbox simulation server
+
+paths:
+  /number-verification/v0/verify:
+    post:
+      operationId: verifyPhoneNumber
+      summary: Verify a phone number matches the device SIM
+      tags:
+        - Number Verification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NumberVerifyRequest"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NumberVerifyResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    NumberVerifyRequest:
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        phoneNumber:
+          type: string
+          description: Phone number in E.164 format
+          example: "+14165550100"
+
+    NumberVerifyResponse:
+      type: object
+      required:
+        - devicePhoneNumberVerified
+      properties:
+        devicePhoneNumberVerified:
+          type: boolean
+          description: Whether the phone number matches the device SIM
+        verificationFailureReason:
+          type: string
+          description: Reason for failure (only present when verified=false)
+          enum:
+            - NUMBER_MISMATCH
+            - NUMBER_PORTED
+            - DEVICE_NOT_APPLICABLE
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+        message:
+          type: string
