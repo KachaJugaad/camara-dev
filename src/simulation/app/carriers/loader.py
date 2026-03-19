@@ -19,7 +19,6 @@ import tomllib
 import os
 from dataclasses import dataclass
 from typing import Optional
-from functools import lru_cache
 
 
 @dataclass
@@ -124,9 +123,7 @@ class CarrierRegistry:
         @raises ValueError         If directory contains no TOML files.
         """
         if not os.path.exists(config_dir):
-            raise FileNotFoundError(
-                f"Carrier config directory not found: {config_dir}"
-            )
+            raise FileNotFoundError(f"Carrier config directory not found: {config_dir}")
 
         for filename in os.listdir(config_dir):
             if not filename.endswith(".toml"):
@@ -169,9 +166,7 @@ class CarrierRegistry:
             ),
             error_profiles=ErrorProfile(
                 timeout_probability=err["timeout_probability"],
-                service_unavailable_probability=err[
-                    "service_unavailable_probability"
-                ],
+                service_unavailable_probability=err["service_unavailable_probability"],
                 invalid_token_probability=err["invalid_token_probability"],
                 roaming_not_supported_probability=err[
                     "roaming_not_supported_probability"
@@ -213,9 +208,7 @@ class CarrierRegistry:
                 clean_prefix = prefix.replace("-", "").replace(" ", "")
                 if digits.startswith(clean_prefix):
                     return profile
-        return self._profiles.get("rogers") or next(
-            iter(self._profiles.values())
-        )
+        return self._profiles.get("rogers") or next(iter(self._profiles.values()))
 
     def list_names(self) -> list[str]:
         """

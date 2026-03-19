@@ -133,9 +133,7 @@ class SimulationEngine:
         checks = [
             (
                 ep.timeout_probability,
-                CarrierError(
-                    "TIMEOUT", "Network timeout — carrier IMS unreachable"
-                ),
+                CarrierError("TIMEOUT", "Network timeout — carrier IMS unreachable"),
             ),
             (
                 ep.service_unavailable_probability,

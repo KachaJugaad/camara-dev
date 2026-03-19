@@ -12,7 +12,6 @@ tests/unit/test_simulation_engine.py — Unit tests for the simulation engine.
 import pytest
 import random
 
-from carriers import CarrierRegistry
 from engine import SimulationEngine
 
 
@@ -98,9 +97,7 @@ def test_rogers_timeout_rate_in_expected_range(rogers):
 def test_no_error_injected_on_most_requests(rogers):
     """@brief Most requests (>80%) should succeed without error injection."""
     engine = SimulationEngine(profile=rogers, seed=42)
-    errors = sum(
-        1 for _ in range(1000) if engine._maybe_inject_error() is not None
-    )
+    errors = sum(1 for _ in range(1000) if engine._maybe_inject_error() is not None)
     assert errors < 150
 
 
@@ -130,9 +127,7 @@ def test_sim_swap_check_validate_rejects_max_age_over_2400():
     """
     from surfaces.sim_swap import validate_check_request
 
-    errors = validate_check_request(
-        {"phoneNumber": "+14165550100", "maxAge": 9999}
-    )
+    errors = validate_check_request({"phoneNumber": "+14165550100", "maxAge": 9999})
     assert any("2400" in e for e in errors)
 
 
@@ -190,9 +185,7 @@ def test_number_verify_response_has_verified_field(rogers):
     """
     from surfaces.number_verify import build_response
 
-    result = build_response(
-        {"phoneNumber": "+14165550100"}, random.Random(42), rogers
-    )
+    result = build_response({"phoneNumber": "+14165550100"}, random.Random(42), rogers)
     assert "devicePhoneNumberVerified" in result
     assert isinstance(result["devicePhoneNumberVerified"], bool)
 

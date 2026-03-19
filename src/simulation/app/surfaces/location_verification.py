@@ -57,9 +57,7 @@ def build_response(payload: dict, rng: random.Random, carrier: Any) -> dict:
     verification_result = rng.choices(results, weights=weights)[0]
 
     # location-verification.yaml: lastLocationTime is required in response
-    last_location_time = datetime.now(timezone.utc).strftime(
-        "%Y-%m-%dT%H:%M:%S+00:00"
-    )
+    last_location_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
     response: dict = {
         "verificationResult": verification_result,
@@ -107,13 +105,9 @@ def validate_request(payload: dict) -> list[str]:
             lat = center.get("latitude", 0)
             lng = center.get("longitude", 0)
             if not (-90 <= lat <= 90):
-                errors.append(
-                    "area.center.latitude must be between -90 and 90"
-                )
+                errors.append("area.center.latitude must be between -90 and 90")
             if not (-180 <= lng <= 180):
-                errors.append(
-                    "area.center.longitude must be between -180 and 180"
-                )
+                errors.append("area.center.longitude must be between -180 and 180")
 
         radius = area.get("radius")
         if radius is None:
@@ -132,9 +126,7 @@ def validate_request(payload: dict) -> list[str]:
     return errors
 
 
-def check_max_age_fulfillable(
-    payload: dict, rng: random.Random
-) -> bool:
+def check_max_age_fulfillable(payload: dict, rng: random.Random) -> bool:
     """
     @brief   Check if maxAge=0 (fresh location) can be fulfilled.
     @param   payload  Request body with optional maxAge.

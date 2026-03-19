@@ -64,9 +64,7 @@ def build_response(payload: dict, rng: random.Random, carrier: Any) -> dict:
     }
 
 
-def build_check_response(
-    payload: dict, rng: random.Random, carrier: Any
-) -> dict:
+def build_check_response(payload: dict, rng: random.Random, carrier: Any) -> dict:
     """
     @brief   Build a CAMARA SIM Swap check response (CheckSimSwapInfo).
     @param   payload  Validated request body with phoneNumber and optional maxAge.
@@ -119,9 +117,7 @@ def validate_check_request(payload: dict) -> list[str]:
     phone = payload.get("phoneNumber", "")
     if phone:
         if not phone.startswith("+"):
-            errors.append(
-                "phoneNumber must be in E.164 format (e.g. +14165550100)"
-            )
+            errors.append("phoneNumber must be in E.164 format (e.g. +14165550100)")
         elif len(phone) < 10 or len(phone) > 16:
             errors.append("phoneNumber length invalid for E.164 format")
 

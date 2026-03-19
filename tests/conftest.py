@@ -16,9 +16,7 @@ import sys
 import pytest
 
 # Ensure src/simulation/app is on the path for imports
-_APP_DIR = os.path.join(
-    os.path.dirname(__file__), "..", "src", "simulation", "app"
-)
+_APP_DIR = os.path.join(os.path.dirname(__file__), "..", "src", "simulation", "app")
 sys.path.insert(0, os.path.abspath(_APP_DIR))
 
 # Set working directory to repo root so config/carriers/ resolves

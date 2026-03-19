@@ -3,41 +3,14 @@
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![CAMARA Fall25](https://img.shields.io/badge/CAMARA-Fall25-purple)](https://camaraproject.org)
-[![Simulated](https://img.shields.io/badge/mode-simulation-green)](https://github.com/KachaJugaad/camara-dev)
+[![Tests](https://img.shields.io/badge/tests-63_passing-green)](tests/)
 [![Substack](https://img.shields.io/badge/Substack-Read_Post-orange)](https://substack.com/home/post/p-191454486)
 
-Canada's first open-source CAMARA API sandbox. Test SIM swap detection, number
-verification, and location verification against realistic Rogers, Bell, and Telus
-simulation profiles — no carrier agreement, no approval process, no cost.
+Test SIM swap detection, number verification, and device location against
+realistic Rogers, Bell, and Telus simulation — no carrier agreement needed.
 
-**CAMARA Fall25 spec-compliant.** All endpoints use v1 paths, CAMARA ErrorInfo schema,
-and spec-accurate response fields.
-
----
-
-## The network already knows. Nobody can ask it.
-
-A woman in Montreal wakes up to a dead phone. She restarts it. Goes about her morning. By the time she calls Rogers three hours later, someone has already used her number to reset her banking passwords, bypass two-factor, and move forty thousand dollars out of her accounts.
-
-The carrier logged the SIM swap at 2am. The timestamp is sitting in a database right now. Her bank had no idea.
-
-Not because the information wasn't there. Because nobody asked.
-
----
-
-**A developer in Waterloo** spent three weeks trying to understand the carrier authentication flow for SIM swap detection. He gave up and shipped SMS OTP instead. He knew it was less secure. He shipped it anyway because he couldn't figure out how to do better. His users are less safe today because the information that would protect them is locked behind a procurement process.
-
-**A fintech in Toronto** built a loan application system that verifies phone numbers during sign-up. They wanted to confirm the number actually belonged to the device submitting the application. The technical capability exists inside every Canadian carrier's IMS core. The developer portal to access it does not. They shipped without verification. Three months later, a fraud ring used spoofed numbers to submit two hundred applications in a single weekend.
-
-**An e-commerce company in Vancouver** wanted to check whether a buyer's phone was actually in the same city as the shipping address before approving high-value orders. The network knows where the device is. Cell tower triangulation has been accurate to city-level for over a decade. The company couldn't get a test environment from any Canadian carrier. They built nothing. They eat the chargebacks.
-
----
-
-**The pattern is the same every time.** The network has the answer. The developer can't ask the question. Not because the technology doesn't exist. Because there's no sandbox, no test environment, no documentation written for someone who doesn't already work in telecommunications.
-
-This sandbox exists so that stops being true.
-
-Three API calls. Three questions the network already knows the answer to.
+CAMARA Fall25 spec-compliant. All endpoints use v1 paths, CAMARA ErrorInfo
+schema, and spec-accurate response fields.
 
 ---
 
@@ -49,7 +22,7 @@ git clone https://github.com/KachaJugaad/camara-dev
 cd camara-dev
 docker compose up
 
-# 2. Use a built-in demo key — no sign-up needed
+# 2. Detect a SIM swap (demo key — no sign-up needed)
 curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
   -H "Authorization: Bearer demo-sandbox-key-rogers" \
   -H "Content-Type: application/json" \
@@ -62,55 +35,48 @@ curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
 # }
 ```
 
-Or open **http://localhost:8080/docs** for the interactive Swagger UI.
+Open **http://localhost:8080/docs** for interactive Swagger UI, or
+**http://localhost:3000** for the developer portal.
 
 ---
 
-## Demo keys (no sign-up required)
+## What is CAMARA?
 
-| Key | Carrier | Use for |
-|-----|---------|---------|
-| `demo-sandbox-key-rogers` | Rogers | Toronto MSISDN testing |
-| `demo-sandbox-key-bell` | Bell | Ottawa/Montreal testing |
-| `demo-sandbox-key-telus` | Telus | Vancouver/Calgary testing |
-| `demo-sandbox-key-auto` | Auto-detect | Detects carrier from MSISDN prefix |
+[CAMARA](https://camaraproject.org) is a global initiative (GSMA + Linux
+Foundation) that standardizes telecom APIs. Instead of proprietary carrier
+interfaces, CAMARA defines one universal spec.
 
-Get your own key (also instant):
-```bash
-curl -X POST http://localhost:8080/sandbox/keys \
-  -H "Content-Type: application/json" \
-  -d '{"email": "you@yourcompany.ca"}'
-```
+**The problem:** Rogers, Bell, and Telus haven't published developer sandboxes.
+If you're building fraud detection or identity verification with telco signals,
+you have nowhere to test.
+
+**This sandbox fills that gap** with realistic carrier simulation.
 
 ---
 
-## Use cases
+## API surfaces
 
-### UC1 — SIM swap fraud detection
+### UC1 — SIM Swap Detection
 
-*The bank's fraud system runs forty machine learning models on every wire transfer. None of them ask the one question that would actually matter: did someone steal this customer's phone number twenty minutes ago? One API call. The carrier already has the answer.*
+Detect if a SIM card was recently swapped — the #1 signal for account takeover.
 
-**Retrieve date** (was there a swap?):
 ```bash
+# When was the SIM last swapped?
 curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
   -H "Authorization: Bearer demo-sandbox-key-rogers" \
   -H "Content-Type: application/json" \
   -d '{"phoneNumber": "+14165550100"}'
-```
 
-**Check** (boolean — did a swap occur within N hours?):
-```bash
+# Was it swapped in the last 24 hours? (boolean)
 curl -X POST http://localhost:8080/sim-swap/v1/check \
   -H "Authorization: Bearer demo-sandbox-key-rogers" \
   -H "Content-Type: application/json" \
   -d '{"phoneNumber": "+14165550100", "maxAge": 24}'
 ```
 
----
+### UC2 — Number Verification
 
-### UC2 — Phone number verification
-
-*A user types their phone number into your app. You send them an SMS code. They type the code back. You call this "verification." Meanwhile, the network knows — without sending anything, without asking the user to do anything — whether that number belongs to the SIM in that device. You just can't ask.*
+Verify a phone number matches the SIM in a device — no SMS code needed.
 
 ```bash
 curl -X POST http://localhost:8080/number-verification/v1/verify \
@@ -119,11 +85,9 @@ curl -X POST http://localhost:8080/number-verification/v1/verify \
   -d '{"phoneNumber": "+16135550100"}'
 ```
 
----
+### UC3 — Location Verification
 
-### UC3 — Location verification
-
-*A customer claims they're in Toronto. Their GPS says Toronto. A ten-dollar app from the Play Store can make any GPS say Toronto. But the cell tower the phone is actually connected to? That's in Bucharest. The network knows. Your fraud system doesn't.*
+Check if a device is within a geographic area using cell tower data.
 
 ```bash
 curl -X POST http://localhost:8080/location-verification/v1/verify \
@@ -139,11 +103,9 @@ curl -X POST http://localhost:8080/location-verification/v1/verify \
   }'
 ```
 
----
+### UC4 — Fraud Score (sandbox-only)
 
-### UC4 — Chained fraud score (all 3 signals)
-
-*SIM swapped two hours ago. Phone number doesn't match the device. GPS says Toronto, cell tower says overseas. Any one of those signals is a red flag. All three together? That's not a customer. That's someone emptying an account. Three API calls. One score. The network had the answer the whole time.*
+Combine all 3 signals into one risk score (0-100). Not part of CAMARA spec.
 
 ```bash
 curl -X POST http://localhost:8080/sandbox/fraud-score \
@@ -155,30 +117,32 @@ curl -X POST http://localhost:8080/sandbox/fraud-score \
   }'
 ```
 
+### UC5 — Developer Portal
+
+React web UI at **http://localhost:3000** with:
+- Instant API key signup (no email verification)
+- Live playground — select a surface, fill params, click "Try it"
+- Copy-paste SDK snippets for curl, Python, and Node.js
+
 ---
 
-## CAMARA spec compliance
+## Demo keys
 
-This sandbox implements CAMARA Fall25 meta-release specifications:
-- SIM Swap v1.0 (two operations: /retrieve-date and /check)
-- Number Verification v1.0
-- Location Verification v1.0 (renamed from device-location per CAMARA Design Guide)
+No sign-up required. Use these immediately:
 
-Spec source: github.com/camaraproject
+| Key | Carrier | Best for |
+|-----|---------|----------|
+| `demo-sandbox-key-rogers` | Rogers | Toronto (+1416) |
+| `demo-sandbox-key-bell` | Bell | Ottawa/Montreal (+1613) |
+| `demo-sandbox-key-telus` | Telus | Vancouver (+1604) |
+| `demo-sandbox-key-auto` | Auto-detect | Detects from MSISDN prefix |
 
-| Surface | Endpoint | Spec version | Compliant | Notes |
-|---------|----------|-------------|-----------|-------|
-| SIM Swap | POST /sim-swap/v1/retrieve-date | Fall25 v1.0 | Yes | |
-| SIM Swap | POST /sim-swap/v1/check | Fall25 v1.0 | Yes | Added |
-| Number Verify | POST /number-verification/v1/verify | Fall25 v1.0 | Yes | |
-| Location | POST /location-verification/v1/verify | Fall25 v1.0 | Yes | Renamed |
-| Auth | Bearer token | Sandbox simplified | Documented | CIBA guide added |
-
-### Sandbox auth vs production auth
-This sandbox uses API key bearer tokens for developer convenience.
-Production CAMARA uses CIBA (Client-Initiated Backchannel Authentication).
-See `GET /sandbox/auth-migration-guide` for the exact flow your code needs
-when moving to a real carrier endpoint.
+Get your own key:
+```bash
+curl -X POST http://localhost:8080/sandbox/keys \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@yourcompany.ca"}'
+```
 
 ---
 
@@ -190,41 +154,90 @@ when moving to a real carrier endpoint.
 | Bell    | 145ms | 410ms | 3.8% | 3 hours |
 | Telus   | 105ms | 295ms | 2.8% | 1 hour |
 
-All values configurable in `config/carriers/*.toml`.
-
----
-
-## Run tests
-
-```bash
-pip install -r src/simulation/requirements.txt
-
-# Unit tests (27 tests)
-pytest tests/unit/ -v
-
-# Integration tests (26 tests)
-pytest tests/integration/ -v
-
-# All tests
-pytest tests/ -v
-```
+All configurable in `config/carriers/*.toml`. Add a carrier = one TOML file,
+zero code changes.
 
 ---
 
 ## Architecture
 
 ```
-Request -> FastAPI (main.py)
-        -> CAMARA headers middleware (spec version, x-correlator)
-        -> auth.py (validate bearer token)
-        -> carriers/ (resolve carrier profile from key or MSISDN)
-        -> engine.py (apply latency + error injection)
-        -> surfaces/*.py (build CAMARA-spec response)
-        -> Response
+Client (curl / SDK / Portal)
+    |
+    v
+FastAPI (main.py)
+    |-- CAMARA headers middleware (x-correlator, spec version)
+    |-- auth.py (validate bearer token)
+    |-- carriers/loader.py (resolve carrier from key or MSISDN)
+    |-- engine.py (latency injection + error injection via seeded RNG)
+    |-- surfaces/*.py (build CAMARA-spec response)
+    |
+    v
+Response + _simulation metadata
 ```
 
-Stack: Python/FastAPI (simulation MVP). Rust planned for production engine (Phase 2).
-All carrier behavior is config-driven (TOML) — zero code changes to add a carrier.
+**Phase 1 (current):** Python/FastAPI simulation MVP.
+**Phase 2 (planned):** Rust simulation engine + Go API gateway.
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details and
+[docs/decisions/](docs/decisions/) for Architecture Decision Records.
+
+---
+
+## Run tests
+
+```bash
+# Install dependencies
+pip install -r src/simulation/requirements.txt
+
+# All tests (63 total)
+pytest tests/ -v
+
+# By category
+pytest tests/unit/ -v           # 30 unit tests
+pytest tests/integration/ -v    # 21 integration tests
+pytest tests/conformance/ -v    # 12 conformance tests
+```
+
+---
+
+## Project structure
+
+```
+camara-dev/
+├── src/simulation/app/     # FastAPI application
+│   ├── main.py             # CAMARA surface endpoints
+│   ├── sandbox_routes.py   # Sandbox management endpoints
+│   ├── fraud_score.py      # Chained fraud scoring
+│   ├── engine.py           # Latency + error injection
+│   ├── auth.py             # Bearer token validation
+│   ├── carriers/           # TOML-driven carrier profiles
+│   └── surfaces/           # CAMARA response builders
+├── src/portal/dev/         # React developer portal (Vite)
+├── config/carriers/        # Rogers, Bell, Telus TOML configs
+├── config/openapi/         # CAMARA OpenAPI specs
+├── config/mcp/             # MCP tool definitions
+├── tests/                  # Unit + integration + conformance
+├── docs/                   # Architecture docs + ADRs
+├── scripts/                # Demo scripts + orchestration
+└── docker-compose.yml      # One command to run everything
+```
+
+---
+
+## CAMARA spec compliance
+
+| Surface | Endpoint | Spec | Status |
+|---------|----------|------|--------|
+| SIM Swap | `/sim-swap/v1/retrieve-date` | Fall25 v1.0 | Compliant |
+| SIM Swap | `/sim-swap/v1/check` | Fall25 v1.0 | Compliant |
+| Number Verify | `/number-verification/v1/verify` | Fall25 v1.0 | Compliant |
+| Location | `/location-verification/v1/verify` | Fall25 v1.0 | Compliant |
+| Error Schema | All endpoints | CAMARA ErrorInfo | Compliant |
+| Headers | x-correlator, spec version | Commonalities | Compliant |
+
+**Auth note:** This sandbox uses API key bearer tokens for convenience.
+Production CAMARA requires CIBA. See `GET /sandbox/auth-migration-guide`.
 
 ---
 
@@ -234,4 +247,5 @@ Apache 2.0 — same license as CAMARA upstream.
 
 ## Contributing
 
-Issues and PRs welcome at [github.com/KachaJugaad/camara-dev](https://github.com/KachaJugaad/camara-dev).
+Issues and PRs welcome at
+[github.com/KachaJugaad/camara-dev](https://github.com/KachaJugaad/camara-dev).

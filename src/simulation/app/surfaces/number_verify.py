@@ -7,9 +7,9 @@ surfaces/number_verify.py — CAMARA Number Verification surface.
         in their device. Used for passwordless login, account recovery,
         and identity proofing.
 
-@spec   CAMARA NumberVerification — Spring25 v0.3.1
+@spec   CAMARA NumberVerification — Fall25 v1
         github.com/camaraproject/NumberVerification
-@endpoint POST /number-verification/v0/verify
+@endpoint POST /number-verification/v1/verify
 
 @note   Response always contains 'devicePhoneNumberVerified' (bool).
         This does NOT constitute legal identity verification.
@@ -51,9 +51,7 @@ def build_response(payload: dict, rng: random.Random, carrier: Any) -> dict:
     if not verified:
         reasons = [r for r, _ in _FAILURE_REASONS]
         weights = [w for _, w in _FAILURE_REASONS]
-        response["verificationFailureReason"] = rng.choices(
-            reasons, weights=weights
-        )[0]
+        response["verificationFailureReason"] = rng.choices(reasons, weights=weights)[0]
 
     return response
 

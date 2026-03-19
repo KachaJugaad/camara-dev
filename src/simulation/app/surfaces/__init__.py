@@ -11,6 +11,6 @@ surfaces — CAMARA API surface implementations.
         errors = sim_swap.validate_request(payload)
         data = sim_swap.build_response(payload, rng, carrier)
 
-@note   device_location.py is kept for backward compat but
-        location_verification.py is the spec-compliant module.
+@note   location_verification.py is the spec-compliant module name
+        per CAMARA Commonalities Design Guide (Fall25).
 """

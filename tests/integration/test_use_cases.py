@@ -122,7 +122,7 @@ class TestUC1SIMSwapFraudDetection:
         """@brief Rogers SIM swap call must return latestSimChange field."""
         r = client.post(
             "/sim-swap/v1/retrieve-date",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100"},
         )
         assert r.status_code == 200
@@ -136,7 +136,7 @@ class TestUC1SIMSwapFraudDetection:
         """@brief Response must include _simulation block."""
         r = client.post(
             "/sim-swap/v1/retrieve-date",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100"},
         )
         assert r.status_code == 200
@@ -166,7 +166,7 @@ class TestUC1SIMSwapFraudDetection:
         """@brief Bell key must use Bell carrier profile."""
         r = client.post(
             "/sim-swap/v1/retrieve-date",
-            headers={"Authorization": f"Bearer {BELL_KEY}"},
+            headers={"Authorization": f"Bearer {BELL_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+16135550100"},
         )
         assert r.status_code == 200
@@ -176,7 +176,7 @@ class TestUC1SIMSwapFraudDetection:
         """@brief Telus key must use Telus carrier profile."""
         r = client.post(
             "/sim-swap/v1/retrieve-date",
-            headers={"Authorization": f"Bearer {TELUS_KEY}"},
+            headers={"Authorization": f"Bearer {TELUS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+16045550100"},
         )
         assert r.status_code == 200
@@ -189,7 +189,7 @@ class TestUC1SIMSwapFraudDetection:
         """
         r = client.post(
             "/sim-swap/v1/check",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100", "maxAge": 24},
         )
         assert r.status_code == 200
@@ -204,7 +204,7 @@ class TestUC1SIMSwapFraudDetection:
         """
         r = client.post(
             "/sim-swap/v1/check",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100", "maxAge": 1000},
         )
         assert r.status_code == 400
@@ -221,7 +221,7 @@ class TestUC2NumberVerification:
         """@brief Number verification must return devicePhoneNumberVerified."""
         r = client.post(
             "/number-verification/v1/verify",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100"},
         )
         assert r.status_code == 200
@@ -238,7 +238,7 @@ class TestUC2NumberVerification:
         ]:
             r = client.post(
                 "/number-verification/v1/verify",
-                headers={"Authorization": f"Bearer {key}"},
+                headers={"Authorization": f"Bearer {key}", "X-Seed": "99"},
                 json={"phoneNumber": "+14165550100"},
             )
             assert r.status_code == 200, f"Failed for {carrier_name}"
@@ -248,7 +248,7 @@ class TestUC2NumberVerification:
         """@brief Auto key must detect Rogers from +1416 MSISDN prefix."""
         r = client.post(
             "/number-verification/v1/verify",
-            headers={"Authorization": f"Bearer {AUTO_KEY}"},
+            headers={"Authorization": f"Bearer {AUTO_KEY}", "X-Seed": "99"},
             json={"phoneNumber": "+14165550100"},
         )
         assert r.status_code == 200
@@ -280,7 +280,7 @@ class TestUC3LocationVerification:
         """
         r = client.post(
             "/location-verification/v1/verify",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json=self.TORONTO_PAYLOAD,
         )
         assert r.status_code == 200
@@ -294,7 +294,7 @@ class TestUC3LocationVerification:
         """
         r = client.post(
             "/location-verification/v1/verify",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json=self.TORONTO_PAYLOAD,
         )
         assert r.status_code == 200
@@ -365,9 +365,7 @@ def test_v0_device_location_redirects_to_location_verification():
         follow_redirects=False,
     )
     assert r.status_code == 301
-    assert "/location-verification/v1/verify" in r.headers.get(
-        "location", ""
-    )
+    assert "/location-verification/v1/verify" in r.headers.get("location", "")
 
 
 # ── UC4: Chained fraud score ─────────────────────────────────────────────────
@@ -380,7 +378,7 @@ class TestUC4ChainedFraudScore:
         """@brief Fraud score must return riskScore and riskLevel."""
         r = client.post(
             "/sandbox/fraud-score",
-            headers={"Authorization": f"Bearer {ROGERS_KEY}"},
+            headers={"Authorization": f"Bearer {ROGERS_KEY}", "X-Seed": "99"},
             json={
                 "phoneNumber": "+14165550100",
                 "location": {
