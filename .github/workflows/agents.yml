@@ -6,59 +6,26 @@ on:
   push:
     branches: [main]
 
-# One job per agent — run in parallel where safe, serial where dependent.
-# Human intervention required only when 'reviewer' outputs approved=false.
+# Phase 1: Only Python lint + tests run.
+# Rust/Go/TypeScript jobs activate when those directories have real code.
+# Agent jobs activate when ANTHROPIC_API_KEY secret is configured.
 
 jobs:
-  # ── Lint (fastest gate — fail immediately on format violations) ──────────────
+  # ── Lint (Python only in Phase 1) ───────────────────────────────────────────
   lint:
     name: Lint (all layers)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Rust lint
-        run: |
-          cd src/simulation
-          cargo fmt --check
-          cargo clippy -- -D warnings
-
-      - name: Go lint
-        uses: golangci/golangci-lint-action@v4
-        with:
-          working-directory: src/api
-
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
       - name: Python lint
         run: |
           pip install black ruff --quiet
-          black --check tests/ agents/
-          ruff check tests/ agents/
+          black --check src/simulation/ tests/
+          ruff check src/simulation/ tests/
 
-      - name: TypeScript lint
-        run: |
-          cd src/portal
-          npm ci --silent
-          npm run lint
-
-  # ── Unit tests (per layer) ────────────────────────────────────────────────────
-  test-rust:
-    name: Rust unit tests
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cd src/simulation && cargo test --all-features -- --test-threads=4
-
-  test-go:
-    name: Go unit tests
-    needs: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with: { go-version: '1.22' }
-      - run: cd src/api && go test ./... -race -count=1
-
+  # ── Python unit tests ───────────────────────────────────────────────────────
   test-python:
     name: Python unit tests
     needs: lint
@@ -67,81 +34,76 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - run: |
-          pip install pytest schemathesis httpx --quiet
-          pytest tests/unit/ -x -q
+      - run: pip install -r src/simulation/requirements.txt --quiet
+      - run: pytest tests/unit/ -x -q
 
   # ── QA: CAMARA spec conformance ────────────────────────────────────────────
   qa-conformance:
     name: QA — CAMARA conformance
-    needs: [test-rust, test-go, test-python]
+    needs: test-python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r src/simulation/requirements.txt --quiet
+      - run: pytest tests/conformance/ -x -q
 
-      - name: Start simulation stack
-        run: |
-          docker compose -f docker-compose.test.yml up -d
-          sleep 5  # Wait for services to be ready
+  # ── Phase 2 gates (skipped until code exists) ──────────────────────────────
+  test-rust:
+    name: Rust unit tests
+    needs: lint
+    if: false  # Phase 2 — activate when src/simulation/Cargo.toml exists
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cd src/simulation && cargo test --all-features
 
-      - name: Run CAMARA conformance suite
-        run: |
-          pip install schemathesis --quiet
-          python tests/conformance/camara_conformance.py
-          # Output goes to .agent-bus/qa-report.json
+  test-go:
+    name: Go unit tests
+    needs: lint
+    if: false  # Phase 2 — activate when src/api/go.mod exists
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: '1.22' }
+      - run: cd src/api && go test ./... -race -count=1
 
-      - name: Upload QA report
-        uses: actions/upload-artifact@v4
-        with:
-          name: qa-report
-          path: .agent-bus/qa-report.json
-
-  # ── Agent: Token Watcher (pre-review baseline) ────────────────────────────
+  # ── Agent jobs (require ANTHROPIC_API_KEY secret) ──────────────────────────
   token-watcher-pre:
     name: Token Watcher (pre)
     needs: lint
+    if: vars.AGENTS_ENABLED == 'true'
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - run: ./scripts/run-agent.sh token-watcher pre-review
-      - uses: actions/upload-artifact@v4
-        with:
-          name: token-report-pre
-          path: .agent-bus/token-report.md
 
-  # ── Agent: User Persona (runs in parallel with operator persona) ──────────
   agent-user-persona:
     name: Agent — User Persona
     needs: lint
+    if: vars.AGENTS_ENABLED == 'true'
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - run: ./scripts/run-agent.sh user-persona
-      - uses: actions/upload-artifact@v4
-        with:
-          name: persona-user
-          path: .agent-bus/persona-user.md
 
-  # ── Agent: Operator Persona ─────────────────────────────────────────────
   agent-operator-persona:
     name: Agent — Operator Persona
     needs: lint
+    if: vars.AGENTS_ENABLED == 'true'
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - run: ./scripts/run-agent.sh operator-persona
-      - uses: actions/upload-artifact@v4
-        with:
-          name: persona-operator
-          path: .agent-bus/persona-operator.md
 
-  # ── Agent: Reviewer (final gate — all other jobs must pass first) ─────────
   agent-reviewer:
     name: Agent — Reviewer (merge gate)
     needs:
@@ -149,50 +111,39 @@ jobs:
       - agent-user-persona
       - agent-operator-persona
       - token-watcher-pre
+    if: vars.AGENTS_ENABLED == 'true'
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 2 }
-
       - name: Run Reviewer agent
         run: ./scripts/run-agent.sh reviewer
-
       - name: Check Reviewer approval
         run: |
           approved=$(python3 -c "import json; d=json.load(open('.agent-bus/review.json')); print(str(d['approved']).lower())")
           if [ "$approved" != "true" ]; then
-            echo "✗ Reviewer blocked this PR:"
+            echo "Reviewer blocked this PR:"
             cat .agent-bus/review.json
             exit 1
           fi
-          echo "✓ Reviewer approved"
+          echo "Reviewer approved"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: review-report
-          path: .agent-bus/review.json
-
-  # ── Agent: Token Watcher (post — runs after everything) ──────────────────
   token-watcher-post:
     name: Token Watcher (post)
     needs: agent-reviewer
+    if: vars.AGENTS_ENABLED == 'true'
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - run: ./scripts/run-agent.sh token-watcher post-review
-      - uses: actions/upload-artifact@v4
-        with:
-          name: token-report-post
-          path: .agent-bus/token-report.md
 
-  # ── Post-merge: Docs + Dashboard update ───────────────────────────────────
   docs-dashboard:
     name: Update docs + index.html
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.AGENTS_ENABLED == 'true'
     needs: token-watcher-post
     runs-on: ubuntu-latest
     env:
@@ -200,13 +151,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { token: '${{ secrets.GITHUB_TOKEN }}' }
-
       - name: Run Docs Agent
         run: ./scripts/run-agent.sh docs-dashboard
-
       - name: Run Layman Agent
         run: ./scripts/run-agent.sh layman
-
       - name: Commit updated docs and dashboard
         run: |
           git config user.name "camara-ca-docs-agent"

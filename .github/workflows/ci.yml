@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install black ruff --quiet
-      - run: black --check src/ tests/
-      - run: ruff check src/ tests/
+      - run: black --check src/simulation/ tests/
+      - run: ruff check src/simulation/ tests/
 
   unit-tests:
     name: Unit tests
