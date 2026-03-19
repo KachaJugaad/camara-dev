@@ -1,4 +1,5 @@
-# camara-dev — Canada's Open CAMARA Telco API Sandbox(https://kachajugaad.github.io/camara-dev/)
+# camara-dev — Canada's Open CAMARA Telco API Sandbox
+# https://kachajugaad.github.io/camara-dev/
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![CAMARA Fall25](https://img.shields.io/badge/CAMARA-Fall25-purple)](https://camaraproject.org)
