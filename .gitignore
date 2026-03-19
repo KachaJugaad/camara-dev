@@ -3,6 +3,7 @@
 
 # Claude Code artifacts — never committed
 .claude/
+CLAUDE.md
 *.jsonl
 
 # Python
