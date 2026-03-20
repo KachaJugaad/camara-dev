@@ -291,6 +291,7 @@ for _old, _new in _V0_REDIRECTS:
         """@brief Factory for v0→v1 redirect handlers."""
 
         async def handler():
+            """@brief Return 301 redirect with Deprecation header."""
             r = RedirectResponse(url=target, status_code=301)
             r.headers["Deprecation"] = "true"
             return r
