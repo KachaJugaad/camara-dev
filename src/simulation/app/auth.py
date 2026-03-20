@@ -97,58 +97,35 @@ def issue_key(email: str, carrier_override: Optional[str] = None) -> str:
     return api_key
 
 
+def _auth_error(message: str):
+    """@brief Raise CAMARA 401 with ErrorInfo schema."""
+    raise HTTPException(
+        status_code=401,
+        detail={"status": 401, "code": "UNAUTHENTICATED", "message": message},
+    )
+
+
 def validate_bearer(authorization: Optional[str]) -> TokenClaims:
     """
     @brief   Validate a bearer token from the Authorization header.
     @param   authorization  Full header value, e.g. "Bearer sk-sandbox-...".
     @return  TokenClaims on success.
     @raises  HTTPException(401)  If token is missing, malformed, or unknown.
-    @detail  Accepts "Bearer sk-sandbox-..." or "Bearer demo-sandbox-key-...".
-             Returns CAMARA Problem Details on all failure paths.
     """
-    # CAMARA Commonalities CAMARA_common.yaml: ErrorInfo schema
-    # status=integer, code=string, message=string — all required
     if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "status": 401,
-                "code": "UNAUTHENTICATED",
-                "message": (
-                    "Authorization header required. "
-                    "Format: Bearer <api-key>. "
-                    "Get a free sandbox key at POST /sandbox/keys "
-                    "or use demo-sandbox-key-auto"
-                ),
-            },
+        _auth_error(
+            "Authorization header required. Format: Bearer <api-key>. "
+            "Get a free key at POST /sandbox/keys or use demo-sandbox-key-auto"
         )
 
     parts = authorization.split(" ", 1)
     if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "status": 401,
-                "code": "UNAUTHENTICATED",
-                "message": "Malformed Authorization header",
-            },
-        )
+        _auth_error("Malformed Authorization header")
 
     api_key = parts[1].strip()
     record = _KEY_STORE.get(api_key)
-
     if not record:
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "status": 401,
-                "code": "UNAUTHENTICATED",
-                "message": (
-                    f"API key not recognized: {api_key[:16]}... "
-                    "Get a free key at POST /sandbox/keys"
-                ),
-            },
-        )
+        _auth_error("API key not recognized. Get a free key at POST /sandbox/keys")
 
     return TokenClaims(
         api_key=api_key,

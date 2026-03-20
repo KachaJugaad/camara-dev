@@ -135,58 +135,24 @@ async def list_operators():
     ]
 
 
+_STEP_DEFS = [
+    ("Account Registration", "Organization name, contact email, carrier identity"),
+    ("MSISDN Ranges", "Define phone number prefix ranges for your network"),
+    ("Latency Profile", "Set p50/p95/p99 latency targets for simulation"),
+    ("Error Profile", "Configure error injection rates (timeout, unavailable)"),
+    ("Feature Flags", "Enable/disable CAMARA surfaces (SIM swap, location, etc.)"),
+    ("Endpoint Registration", "Register your real CAMARA endpoint URL for passthrough"),
+    ("Test Verification", "Run conformance tests against your registered endpoint"),
+    ("Publish", "Make your carrier profile available to sandbox developers"),
+]
+
+
 def _build_steps() -> list[dict]:
     """
     @brief   Build the 8-step onboarding checklist.
     @return  List of step dicts with name, description, completed flag.
     """
     return [
-        {
-            "step": 1,
-            "name": "Account Registration",
-            "description": "Organization name, contact email, carrier identity",
-            "completed": True,
-        },
-        {
-            "step": 2,
-            "name": "MSISDN Ranges",
-            "description": "Define phone number prefix ranges for your network",
-            "completed": False,
-        },
-        {
-            "step": 3,
-            "name": "Latency Profile",
-            "description": "Set p50/p95/p99 latency targets for simulation",
-            "completed": False,
-        },
-        {
-            "step": 4,
-            "name": "Error Profile",
-            "description": "Configure error injection rates (timeout, unavailable)",
-            "completed": False,
-        },
-        {
-            "step": 5,
-            "name": "Feature Flags",
-            "description": "Enable/disable CAMARA surfaces (SIM swap, location, etc.)",
-            "completed": False,
-        },
-        {
-            "step": 6,
-            "name": "Endpoint Registration",
-            "description": "Register your real CAMARA endpoint URL for passthrough",
-            "completed": False,
-        },
-        {
-            "step": 7,
-            "name": "Test Verification",
-            "description": "Run conformance tests against your registered endpoint",
-            "completed": False,
-        },
-        {
-            "step": 8,
-            "name": "Publish",
-            "description": "Make your carrier profile available to sandbox developers",
-            "completed": False,
-        },
+        {"step": i + 1, "name": name, "description": desc, "completed": i == 0}
+        for i, (name, desc) in enumerate(_STEP_DEFS)
     ]

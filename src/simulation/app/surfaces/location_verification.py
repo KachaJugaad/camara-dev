@@ -72,57 +72,48 @@ def build_response(payload: dict, rng: random.Random, carrier: Any) -> dict:
     return response
 
 
+def _validate_area(area: dict) -> list[str]:
+    """@brief Validate area object per location-verification.yaml."""
+    errors = []
+    if area.get("areaType") not in ("CIRCLE",):
+        errors.append("area.areaType must be 'CIRCLE'")
+    center = area.get("center", {})
+    if "latitude" not in center or "longitude" not in center:
+        errors.append("area.center must contain latitude and longitude")
+    else:
+        if not (-90 <= center.get("latitude", 0) <= 90):
+            errors.append("area.center.latitude must be between -90 and 90")
+        if not (-180 <= center.get("longitude", 0) <= 180):
+            errors.append("area.center.longitude must be between -180 and 180")
+    radius = area.get("radius")
+    if radius is None:
+        errors.append("area.radius is required (meters)")
+    elif not isinstance(radius, (int, float)) or radius <= 0:
+        errors.append("area.radius must be a positive number (meters)")
+    elif radius > 200000:
+        errors.append("area.radius cannot exceed 200000 meters")
+    return errors
+
+
 def validate_request(payload: dict) -> list[str]:
     """
     @brief   Validate a location verification request against CAMARA spec.
     @param   payload  Raw request body dict.
     @return  List of validation error messages. Empty list means valid.
-    @spec    location-verification.yaml: VerifyLocationRequest —
-             area is required, device is optional (3-legged flow).
-             maxAge is integer in seconds, minimum 0.
     """
     errors = []
-
     device = payload.get("device", {})
     phone = device.get("phoneNumber", "")
-    if device and phone:
-        if not phone.startswith("+"):
-            errors.append("device.phoneNumber must be E.164 format")
-
+    if device and phone and not phone.startswith("+"):
+        errors.append("device.phoneNumber must be E.164 format")
     area = payload.get("area", {})
     if not area:
-        # location-verification.yaml: area is required
         errors.append("area is required")
     else:
-        area_type = area.get("areaType")
-        if area_type not in ("CIRCLE",):
-            errors.append("area.areaType must be 'CIRCLE'")
-
-        center = area.get("center", {})
-        if "latitude" not in center or "longitude" not in center:
-            errors.append("area.center must contain latitude and longitude")
-        else:
-            lat = center.get("latitude", 0)
-            lng = center.get("longitude", 0)
-            if not (-90 <= lat <= 90):
-                errors.append("area.center.latitude must be between -90 and 90")
-            if not (-180 <= lng <= 180):
-                errors.append("area.center.longitude must be between -180 and 180")
-
-        radius = area.get("radius")
-        if radius is None:
-            errors.append("area.radius is required (meters)")
-        elif not isinstance(radius, (int, float)) or radius <= 0:
-            errors.append("area.radius must be a positive number (meters)")
-        elif radius > 200000:
-            errors.append("area.radius cannot exceed 200000 meters")
-
-    # location-verification.yaml: maxAge is integer, minimum 0, in seconds
+        errors.extend(_validate_area(area))
     max_age = payload.get("maxAge")
-    if max_age is not None:
-        if not isinstance(max_age, int) or max_age < 0:
-            errors.append("maxAge must be a non-negative integer (seconds)")
-
+    if max_age is not None and (not isinstance(max_age, int) or max_age < 0):
+        errors.append("maxAge must be a non-negative integer (seconds)")
     return errors
 
 

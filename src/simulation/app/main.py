@@ -1,11 +1,7 @@
 """
-main.py — CAMARA Canada Sandbox simulation server (Fall25 spec-compliant).
+main.py — CAMARA Canada Sandbox (Fall25 spec-compliant).
 
-@file   main.py
-@brief  FastAPI app exposing CAMARA Fall25 endpoints with carrier simulation.
-@detail SIM Swap v1, Number Verification v1, Location Verification v1.
-        Sandbox management and fraud-score in separate router modules.
-
+@brief  FastAPI app: SIM Swap v1, Number Verification v1, Location Verification v1.
 @usage  uvicorn main:app --reload --port 8080
 """
 
@@ -280,34 +276,25 @@ async def verify_location(
 
 
 # ── v0 deprecated redirects → v1 ─────────────────────────────────────────────
+# Data-driven: old v0 paths → new v1 paths with 301 + Deprecation header
 
+_V0_REDIRECTS = [
+    ("/sim-swap/v0/retrieve-date", "/sim-swap/v1/retrieve-date"),
+    ("/sim-swap/v0/check", "/sim-swap/v1/check"),
+    ("/number-verification/v0/verify", "/number-verification/v1/verify"),
+    ("/device-location/v0/verify", "/location-verification/v1/verify"),
+]
 
-def _v0_redirect(url: str) -> RedirectResponse:
-    """@brief Create a 301 redirect with Deprecation header."""
-    r = RedirectResponse(url=url, status_code=301)
-    r.headers["Deprecation"] = "true"
-    return r
+for _old, _new in _V0_REDIRECTS:
 
+    def _make_redirect(target: str):
+        """@brief Factory for v0→v1 redirect handlers."""
 
-@app.post("/sim-swap/v0/retrieve-date", include_in_schema=False)
-async def redir_sim_swap_date():
-    """@brief v0 → v1 redirect."""
-    return _v0_redirect("/sim-swap/v1/retrieve-date")
+        async def handler():
+            r = RedirectResponse(url=target, status_code=301)
+            r.headers["Deprecation"] = "true"
+            return r
 
+        return handler
 
-@app.post("/sim-swap/v0/check", include_in_schema=False)
-async def redir_sim_swap_check():
-    """@brief v0 → v1 redirect."""
-    return _v0_redirect("/sim-swap/v1/check")
-
-
-@app.post("/number-verification/v0/verify", include_in_schema=False)
-async def redir_number_verify():
-    """@brief v0 → v1 redirect."""
-    return _v0_redirect("/number-verification/v1/verify")
-
-
-@app.post("/device-location/v0/verify", include_in_schema=False)
-async def redir_device_location():
-    """@brief v0 → v1 redirect (renamed to location-verification)."""
-    return _v0_redirect("/location-verification/v1/verify")
+    app.post(_old, include_in_schema=False)(_make_redirect(_new))
