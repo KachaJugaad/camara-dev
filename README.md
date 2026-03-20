@@ -3,21 +3,20 @@
 
 [![Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 [![CAMARA Fall25](https://img.shields.io/badge/CAMARA-Fall25-purple)](https://camaraproject.org)
-[![Tests](https://img.shields.io/badge/tests-63_passing-green)](tests/)
+[![Tests](https://img.shields.io/badge/tests-71_passing-green)](tests/)
 [![Substack](https://img.shields.io/badge/Substack-Read_Post-orange)](https://substack.com/home/post/p-191454486)
 
 Test SIM swap detection, number verification, and device location against
 realistic Rogers, Bell, and Telus simulation — no carrier agreement needed.
 
-CAMARA Fall25 spec-compliant. All endpoints use v1 paths, CAMARA ErrorInfo
-schema, and spec-accurate response fields.
+CAMARA Fall25 spec-compliant. 25 API endpoints. 3 web portals. 1 CLI.
 
 ---
 
 ## First API call in 90 seconds
 
 ```bash
-# 1. Clone and start
+# 1. Clone and start (starts API + 3 portals)
 git clone https://github.com/KachaJugaad/camara-dev
 cd camara-dev
 docker compose up
@@ -35,9 +34,6 @@ curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
 # }
 ```
 
-Open **http://localhost:8080/docs** for interactive Swagger UI, or
-**http://localhost:3000** for the developer portal.
-
 ---
 
 ## What is CAMARA?
@@ -51,6 +47,19 @@ If you're building fraud detection or identity verification with telco signals,
 you have nowhere to test.
 
 **This sandbox fills that gap** with realistic carrier simulation.
+
+---
+
+## Three portals, one command
+
+`docker compose up` starts everything:
+
+| Portal | URL | For |
+|--------|-----|-----|
+| **Developer Portal** | [localhost:3000](http://localhost:3000) | API key signup, live playground, SDK snippets |
+| **Operator Wizard** | [localhost:3001](http://localhost:3001) | 8-step carrier onboarding flow |
+| **Admin Dashboard** | [localhost:3002](http://localhost:3002) | Usage stats, error rates, operator status |
+| **Swagger Docs** | [localhost:8080/docs](http://localhost:8080/docs) | Interactive API documentation |
 
 ---
 
@@ -119,16 +128,47 @@ curl -X POST http://localhost:8080/sandbox/fraud-score \
 
 ### UC5 — Developer Portal
 
-React web UI at **http://localhost:3000** with:
-- Instant API key signup (no email verification)
-- Live playground — select a surface, fill params, click "Try it"
-- Copy-paste SDK snippets for curl, Python, and Node.js
+React web UI at **http://localhost:3000** — get an API key, test endpoints
+in the live playground, copy SDK snippets for curl/Python/Node.js.
+
+### UC6 — Operator Onboarding + Admin Dashboard
+
+**Operator wizard** at **http://localhost:3001** — 8-step guided flow:
+Account → MSISDN ranges → Latency → Error rates → Features → Endpoint → Test → Publish
+
+```bash
+# Or use the API directly:
+curl -X POST http://localhost:8080/operator/register \
+  -H "Content-Type: application/json" \
+  -d '{"organizationName":"Rogers","contactEmail":"eng@rogers.com","carrierName":"rogers"}'
+```
+
+**Admin dashboard** at **http://localhost:3002** — usage counts, error rates,
+developer signups, operator status. Auto-refreshes every 10 seconds.
+
+```bash
+curl http://localhost:8080/admin/stats    # Overall stats
+curl http://localhost:8080/admin/usage    # Per-endpoint breakdown
+curl http://localhost:8080/admin/recent   # Last 50 API calls
+```
+
+---
+
+## CLI
+
+```bash
+python scripts/camara-cli.py sim-swap  --phone +14165550100
+python scripts/camara-cli.py verify    --phone +16135550100
+python scripts/camara-cli.py location  --phone +16045550100 --lat 49.28 --lon -123.12
+python scripts/camara-cli.py fraud     --phone +14165550100
+python scripts/camara-cli.py carriers
+```
 
 ---
 
 ## Demo keys
 
-No sign-up required. Use these immediately:
+No sign-up required:
 
 | Key | Carrier | Best for |
 |-----|---------|----------|
@@ -162,18 +202,23 @@ zero code changes.
 ## Architecture
 
 ```
-Client (curl / SDK / Portal)
+Client (curl / SDK / CLI / Portal)
     |
     v
-FastAPI (main.py)
+FastAPI (main.py) — :8080
     |-- CAMARA headers middleware (x-correlator, spec version)
-    |-- auth.py (validate bearer token)
-    |-- carriers/loader.py (resolve carrier from key or MSISDN)
-    |-- engine.py (latency injection + error injection via seeded RNG)
-    |-- surfaces/*.py (build CAMARA-spec response)
-    |
+    |-- auth.py (bearer token validation)
+    |-- sandbox_routes.py (key issuance, carrier listing)
+    |-- fraud_score.py (chained 3-signal scoring)
+    |-- operator_routes.py (8-step onboarding wizard)
+    |-- admin_routes.py (usage stats, error rates)
+    |-- carriers/loader.py (TOML-driven carrier profiles)
+    |-- engine.py (latency + error injection via seeded RNG)
+    |-- surfaces/*.py (CAMARA-spec response builders)
     v
 Response + _simulation metadata
+
+Portals: dev (:3000) | operator (:3001) | admin (:3002)
 ```
 
 **Phase 1 (current):** Python/FastAPI simulation MVP.
@@ -187,16 +232,15 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full details and
 ## Run tests
 
 ```bash
-# Install dependencies
 pip install -r src/simulation/requirements.txt
 
-# All tests (63 total)
+# All tests (71 total)
 pytest tests/ -v
 
 # By category
-pytest tests/unit/ -v           # 30 unit tests
-pytest tests/integration/ -v    # 21 integration tests
-pytest tests/conformance/ -v    # 12 conformance tests
+pytest tests/unit/ -v           # 27 unit tests
+pytest tests/integration/ -v    # 34 integration tests
+pytest tests/conformance/ -v    # 10 conformance tests
 ```
 
 ---
@@ -205,22 +249,34 @@ pytest tests/conformance/ -v    # 12 conformance tests
 
 ```
 camara-dev/
-├── src/simulation/app/     # FastAPI application
-│   ├── main.py             # CAMARA surface endpoints
-│   ├── sandbox_routes.py   # Sandbox management endpoints
-│   ├── fraud_score.py      # Chained fraud scoring
-│   ├── engine.py           # Latency + error injection
-│   ├── auth.py             # Bearer token validation
-│   ├── carriers/           # TOML-driven carrier profiles
-│   └── surfaces/           # CAMARA response builders
-├── src/portal/dev/         # React developer portal (Vite)
-├── config/carriers/        # Rogers, Bell, Telus TOML configs
-├── config/openapi/         # CAMARA OpenAPI specs
-├── config/mcp/             # MCP tool definitions
-├── tests/                  # Unit + integration + conformance
-├── docs/                   # Architecture docs + ADRs
-├── scripts/                # Demo scripts + orchestration
-└── docker-compose.yml      # One command to run everything
+├── src/simulation/app/        # FastAPI application
+│   ├── main.py                # CAMARA surface endpoints (v1)
+│   ├── sandbox_routes.py      # Key issuance, carrier listing
+│   ├── fraud_score.py         # Chained fraud scoring (UC4)
+│   ├── operator_routes.py     # 8-step onboarding wizard (UC6)
+│   ├── admin_routes.py        # Usage stats dashboard (UC6)
+│   ├── engine.py              # Latency + error injection
+│   ├── auth.py                # Bearer token validation
+│   ├── carriers/              # TOML-driven carrier profiles
+│   └── surfaces/              # CAMARA response builders
+├── src/portal/
+│   ├── dev/                   # Developer portal (:3000)
+│   ├── operator/              # Operator wizard (:3001)
+│   └── admin/                 # Admin dashboard (:3002)
+├── scripts/
+│   ├── camara-cli.py          # CLI for all operations
+│   └── demo_agent_fraud_check.py
+├── config/carriers/           # Rogers, Bell, Telus TOML configs
+├── config/openapi/            # CAMARA OpenAPI specs
+├── config/mcp/                # MCP tool definitions
+├── tests/
+│   ├── unit/                  # 27 tests
+│   ├── integration/           # 34 tests
+│   └── conformance/           # 10 tests
+├── docs/
+│   ├── ARCHITECTURE.md
+│   └── decisions/             # ADR-001, ADR-002
+└── docker-compose.yml         # One command to run everything
 ```
 
 ---
