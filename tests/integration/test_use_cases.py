@@ -341,7 +341,7 @@ def test_v0_sim_swap_redirects_to_v1():
         json={"phoneNumber": "+14165550100"},
         follow_redirects=False,
     )
-    assert r.status_code == 301
+    assert r.status_code == 308
     assert "/sim-swap/v1/retrieve-date" in r.headers.get("location", "")
     assert r.headers.get("Deprecation") == "true"
 
@@ -364,7 +364,7 @@ def test_v0_device_location_redirects_to_location_verification():
         },
         follow_redirects=False,
     )
-    assert r.status_code == 301
+    assert r.status_code == 308
     assert "/location-verification/v1/verify" in r.headers.get("location", "")
 
 

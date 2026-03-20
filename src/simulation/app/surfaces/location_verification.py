@@ -102,9 +102,9 @@ def validate_request(payload: dict) -> list[str]:
     @return  List of validation error messages. Empty list means valid.
     """
     errors = []
-    device = payload.get("device", {})
-    phone = device.get("phoneNumber", "")
-    if device and phone and not phone.startswith("+"):
+    device = payload.get("device") or {}
+    phone = device.get("phoneNumber", "") if isinstance(device, dict) else ""
+    if phone and not phone.startswith("+"):
         errors.append("device.phoneNumber must be E.164 format")
     area = payload.get("area", {})
     if not area:

@@ -76,10 +76,10 @@ async def fraud_score(
         "area": {"areaType": "CIRCLE"},
     }
     loc = body.get("location", {})
-    if loc:
+    if loc and "latitude" in loc and "longitude" in loc:
         loc_body["area"]["center"] = {
-            "latitude": loc["latitude"],
-            "longitude": loc["longitude"],
+            "latitude": loc.get("latitude", 0),
+            "longitude": loc.get("longitude", 0),
         }
         loc_body["area"]["radius"] = loc.get("radiusMeters", 10000)
     loc_result = await engine.run("location_verification", loc_body)

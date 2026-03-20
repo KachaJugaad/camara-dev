@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
@@ -24,7 +25,7 @@ from surfaces import sim_swap, number_verify, location_verification
 from sandbox_routes import router as sandbox_router
 from fraud_score import router as fraud_router
 from operator_routes import router as operator_router
-from admin_routes import router as admin_router
+from admin_routes import router as admin_router, record_call
 
 
 @asynccontextmanager
@@ -73,16 +74,34 @@ async def camara_error_handler(request: Request, exc: HTTPException):
     )
 
 
+@app.exception_handler(RequestValidationError)
+async def camara_validation_error_handler(
+    request: Request, exc: RequestValidationError
+):
+    """@brief Return CAMARA ErrorInfo for malformed request bodies."""
+    return JSONResponse(
+        status_code=400,
+        content={"status": 400, "code": "INVALID_ARGUMENT", "message": str(exc)},
+    )
+
+
 @app.middleware("http")
-async def add_camara_headers(request: Request, call_next):
-    """@brief Add CAMARA spec headers + x-correlator to every response."""
+async def add_camara_headers_and_track(request: Request, call_next):
+    """@brief Add CAMARA headers, track calls for admin stats."""
+    import time as _time
+
+    start = _time.perf_counter()
     response = await call_next(request)
+    latency = (_time.perf_counter() - start) * 1000
     response.headers["X-CAMARA-Spec-Version"] = "Fall25"
     response.headers["X-CAMARA-API-Version"] = "1.0.0"
     response.headers["X-CAMARA-Simulated"] = "true"
     response.headers["X-CAMARA-Auth-Mode"] = "sandbox-simplified"
     correlator = request.headers.get("x-correlator")
     response.headers["x-correlator"] = correlator or str(uuid.uuid4())
+    # Track for admin dashboard
+    if request.url.path not in ("/docs", "/redoc", "/openapi.json", "/health"):
+        record_call(request.url.path, "auto", response.status_code, latency)
     return response
 
 
@@ -252,12 +271,13 @@ async def verify_location(
     errs = location_verification.validate_request(body)
     if errs:
         return _err(400, "INVALID_ARGUMENT", "; ".join(errs))
-    phone = body.get("device", {}).get("phoneNumber", "")
+    device = body.get("device") or {}
+    phone = device.get("phoneNumber", "") if isinstance(device, dict) else ""
     if not phone:
         return _err(
             422, "MISSING_IDENTIFIER", "device.phoneNumber required in 2-legged flow"
         )
-    rng = _rng_mod.Random()
+    rng = _rng_mod.Random(_seed(request))
     if not location_verification.check_max_age_fulfillable(body, rng):
         return _err(
             422,
@@ -292,7 +312,7 @@ for _old, _new in _V0_REDIRECTS:
 
         async def handler():
             """@brief Return 301 redirect with Deprecation header."""
-            r = RedirectResponse(url=target, status_code=301)
+            r = RedirectResponse(url=target, status_code=308)
             r.headers["Deprecation"] = "true"
             return r
 
