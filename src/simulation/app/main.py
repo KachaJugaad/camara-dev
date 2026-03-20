@@ -27,6 +27,8 @@ from auth import get_claims, TokenClaims
 from surfaces import sim_swap, number_verify, location_verification
 from sandbox_routes import router as sandbox_router
 from fraud_score import router as fraud_router
+from operator_routes import router as operator_router
+from admin_routes import router as admin_router
 
 
 @asynccontextmanager
@@ -53,6 +55,8 @@ app.add_middleware(
 )
 app.include_router(sandbox_router)
 app.include_router(fraud_router)
+app.include_router(operator_router)
+app.include_router(admin_router)
 
 
 @app.exception_handler(HTTPException)

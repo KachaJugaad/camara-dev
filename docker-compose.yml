@@ -30,3 +30,17 @@ services:
       - "3000:3000"
     depends_on:
       - simulation
+
+  portal-operator:
+    build: src/portal/operator
+    ports:
+      - "3001:3001"
+    depends_on:
+      - simulation
+
+  portal-admin:
+    build: src/portal/admin
+    ports:
+      - "3002:3002"
+    depends_on:
+      - simulation

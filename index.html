@@ -296,36 +296,153 @@ curl -X POST http://localhost:8080/sandbox/fraud-score \
     <p style="font-size:12px;color:var(--muted);margin-top:8px">Production CAMARA uses CIBA auth. See <code>GET /sandbox/auth-migration-guide</code> for migration details.</p>
   </section>
 
-  <!-- Dev Portal -->
-  <section>
-    <h2>Developer portal</h2>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">Web UI</div>
-        <p style="font-size:14px;color:var(--muted)">React-based developer portal with API key signup, live playground, and SDK snippets. Run <code>docker compose up</code> and open <code>localhost:3000</code>.</p>
-      </div>
-      <div class="card">
-        <div class="card-title">Swagger docs</div>
-        <p style="font-size:14px;color:var(--muted)">Auto-generated OpenAPI documentation with try-it-out. Open <code>localhost:8080/docs</code> after starting the sandbox.</p>
-      </div>
+  <!-- ── Role-based guides ── -->
+  <section id="guides">
+    <h2>Getting started by role</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Choose your role below. Each guide has step-by-step instructions and working code samples.</p>
+
+    <!-- Developer Guide -->
+    <div class="surface-card" id="guide-developer">
+      <h3>For Developers <span class="status status-live">Start here</span></h3>
+      <p class="desc">Build fraud detection, identity verification, or location-aware apps against real CAMARA contracts.</p>
+
+      <div class="step"><div class="step-num">1</div><div class="step-body"><h3>Start the sandbox</h3>
+        <pre><code>git clone https://github.com/KachaJugaad/camara-dev
+cd camara-dev && docker compose up</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num">2</div><div class="step-body"><h3>Get an API key</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:8px">Use a demo key instantly, or create your own:</p>
+        <pre><code># Demo keys (no signup needed):
+# demo-sandbox-key-rogers | demo-sandbox-key-bell | demo-sandbox-key-telus
+
+# Or create your own:
+curl -X POST http://localhost:8080/sandbox/keys \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@company.ca"}'</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num">3</div><div class="step-body"><h3>Make your first CAMARA call</h3>
+        <pre><code># SIM swap detection
+curl -X POST http://localhost:8080/sim-swap/v1/retrieve-date \
+  -H "Authorization: Bearer demo-sandbox-key-rogers" \
+  -H "Content-Type: application/json" \
+  -d '{"phoneNumber": "+14165550100"}'
+
+# Number verification
+curl -X POST http://localhost:8080/number-verification/v1/verify \
+  -H "Authorization: Bearer demo-sandbox-key-bell" \
+  -d '{"phoneNumber": "+16135550100"}'
+
+# Location verification
+curl -X POST http://localhost:8080/location-verification/v1/verify \
+  -H "Authorization: Bearer demo-sandbox-key-telus" \
+  -d '{"device":{"phoneNumber":"+16045550100"},"area":{"areaType":"CIRCLE","center":{"latitude":49.28,"longitude":-123.12},"radius":10000}}'</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num">4</div><div class="step-body"><h3>Use the web playground or CLI</h3>
+        <p style="color:var(--muted);font-size:14px">
+          <strong>Web UI:</strong> Open <code>localhost:3000</code> &mdash; visual playground with SDK snippets<br>
+          <strong>Swagger:</strong> Open <code>localhost:8080/docs</code> &mdash; interactive API docs<br>
+          <strong>CLI:</strong> <code>python scripts/camara-cli.py sim-swap --phone +14165550100</code>
+        </p>
+      </div></div>
+
+      <div class="step"><div class="step-num">5</div><div class="step-body"><h3>Python / Node.js integration</h3>
+        <pre><code># Python
+import httpx
+resp = httpx.post("http://localhost:8080/sim-swap/v1/retrieve-date",
+    headers={"Authorization": "Bearer demo-sandbox-key-rogers"},
+    json={"phoneNumber": "+14165550100"})
+print(resp.json())
+
+# Node.js
+const resp = await fetch("http://localhost:8080/sim-swap/v1/retrieve-date", {
+  method: "POST",
+  headers: { Authorization: "Bearer demo-sandbox-key-rogers",
+             "Content-Type": "application/json" },
+  body: JSON.stringify({ phoneNumber: "+14165550100" }),
+});
+console.log(await resp.json());</code></pre>
+      </div></div>
+    </div>
+
+    <!-- Operator Guide -->
+    <div class="surface-card" id="guide-operator" style="margin-top:24px">
+      <h3>For Operators (Carriers)</h3>
+      <p class="desc">Register your real CAMARA endpoint through an 8-step guided wizard. No manual config files needed.</p>
+
+      <div class="step"><div class="step-num">1</div><div class="step-body"><h3>Open the operator portal</h3>
+        <p style="color:var(--muted);font-size:14px"><code>docker compose up</code> then open <code>localhost:3001</code></p>
+      </div></div>
+
+      <div class="step"><div class="step-num">2</div><div class="step-body"><h3>Complete the 8-step wizard</h3>
+        <p style="color:var(--muted);font-size:14px">Account &rarr; MSISDN ranges &rarr; Latency profile &rarr; Error rates &rarr; Feature flags &rarr; Endpoint URL &rarr; Test &rarr; Publish</p>
+      </div></div>
+
+      <div class="step"><div class="step-num">3</div><div class="step-body"><h3>Or use the API directly</h3>
+        <pre><code># Step 1: Register
+curl -X POST http://localhost:8080/operator/register \
+  -H "Content-Type: application/json" \
+  -d '{"organizationName":"Rogers","contactEmail":"eng@rogers.com","carrierName":"rogers"}'
+
+# Step 2: Configure MSISDN ranges
+curl -X POST http://localhost:8080/operator/step/{operator-id}/2 \
+  -d '{"msisdnPrefixes":"1416,1647,1437"}'
+
+# Check progress
+curl http://localhost:8080/operator/status/{operator-id}</code></pre>
+      </div></div>
+
+      <div class="step"><div class="step-num">4</div><div class="step-body"><h3>Register your real endpoint (optional)</h3>
+        <p style="color:var(--muted);font-size:14px">In step 6, provide your real CAMARA endpoint URL. The sandbox will passthrough to it instead of simulating. Run conformance tests in step 7 to validate.</p>
+      </div></div>
+    </div>
+
+    <!-- Admin Guide -->
+    <div class="surface-card" id="guide-admin" style="margin-top:24px">
+      <h3>For Admins</h3>
+      <p class="desc">Monitor sandbox usage, error rates, developer signups, and operator onboarding status.</p>
+
+      <div class="step"><div class="step-num">1</div><div class="step-body"><h3>Open the admin dashboard</h3>
+        <p style="color:var(--muted);font-size:14px"><code>docker compose up</code> then open <code>localhost:3002</code> &mdash; auto-refreshes every 10 seconds.</p>
+      </div></div>
+
+      <div class="step"><div class="step-num">2</div><div class="step-body"><h3>Or query the API</h3>
+        <pre><code># Overall stats
+curl http://localhost:8080/admin/stats
+
+# Per-endpoint usage
+curl http://localhost:8080/admin/usage
+
+# Recent API calls (last 50)
+curl http://localhost:8080/admin/recent
+
+# List registered operators
+curl http://localhost:8080/operator/list</code></pre>
+      </div></div>
     </div>
   </section>
 
-  <!-- Who is this for? -->
+  <!-- Portals summary -->
   <section>
-    <h2>Who is this for?</h2>
+    <h2>Three portals, one command</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:16px"><code>docker compose up</code> starts everything:</p>
     <div class="grid-3">
       <div class="card">
-        <div class="card-title">Fintech developers</div>
-        <p style="font-size:14px;color:var(--muted)">Building fraud detection? Test SIM swap + number verification before buying a carrier agreement.</p>
+        <div class="card-title">Developer Portal</div>
+        <div class="card-value" style="font-size:20px">localhost:3000</div>
+        <div class="card-sub">API key signup, live playground, SDK snippets</div>
       </div>
       <div class="card">
-        <div class="card-title">AI agent builders</div>
-        <p style="font-size:14px;color:var(--muted)">Integrate telco signals via MCP tools. Each CAMARA surface is an MCP tool your agent can call.</p>
+        <div class="card-title">Operator Wizard</div>
+        <div class="card-value" style="font-size:20px">localhost:3001</div>
+        <div class="card-sub">8-step carrier onboarding flow</div>
       </div>
       <div class="card">
-        <div class="card-title">Carrier engineers</div>
-        <p style="font-size:14px;color:var(--muted)">Testing your CAMARA implementation? Use the conformance test suite to validate before production.</p>
+        <div class="card-title">Admin Dashboard</div>
+        <div class="card-value" style="font-size:20px">localhost:3002</div>
+        <div class="card-sub">Usage stats, error rates, operator status</div>
       </div>
     </div>
   </section>
